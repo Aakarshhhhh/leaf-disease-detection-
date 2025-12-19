@@ -33,6 +33,8 @@ export const authenticateToken = (req: AuthenticatedRequest, res: Response, next
       email: decoded.email,
       role: decoded.role,
       passwordHash: '', // Not included in JWT for security
+      firstName: null, // Not included in JWT
+      lastName: null, // Not included in JWT
       createdAt: new Date(),
       updatedAt: new Date()
     }
@@ -70,5 +72,5 @@ export const generateToken = (user: User): string => {
 
   return jwt.sign(payload, jwtSecret, { 
     expiresIn: process.env.JWT_EXPIRES_IN || '24h' 
-  })
+  } as jwt.SignOptions)
 }

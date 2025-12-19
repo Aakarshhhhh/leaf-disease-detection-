@@ -2,21 +2,24 @@ import { PrismaClient, Prisma } from '@prisma/client';
 import { DatabaseError } from '../types/index.js';
 
 // Global variable to store the Prisma client instance
-let prisma: PrismaClient;
+let _prisma: PrismaClient;
 
 /**
  * Initialize and return a Prisma client instance
  * Uses singleton pattern to ensure only one instance exists
  */
 export function getPrismaClient(): PrismaClient {
-  if (!prisma) {
-    prisma = new PrismaClient({
+  if (!_prisma) {
+    _prisma = new PrismaClient({
       log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
       errorFormat: 'pretty',
     });
   }
-  return prisma;
+  return _prisma;
 }
+
+// Export prisma instance getter for direct use
+export const prisma = getPrismaClient()
 
 /**
  * Connect to the database with error handling
@@ -37,8 +40,8 @@ export async function connectDatabase(): Promise<void> {
  */
 export async function disconnectDatabase(): Promise<void> {
   try {
-    if (prisma) {
-      await prisma.$disconnect();
+    if (_prisma) {
+      await _prisma.$disconnect();
       console.log('✅ Database disconnected successfully');
     }
   } catch (error) {

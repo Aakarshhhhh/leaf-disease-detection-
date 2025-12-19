@@ -5,6 +5,7 @@ import morgan from 'morgan'
 import dotenv from 'dotenv'
 import { connectDatabase, checkDatabaseHealth } from './lib/database.js'
 import authRoutes from './routes/auth.js'
+import uploadRoutes from './routes/upload.js'
 
 // Load environment variables
 dotenv.config()
@@ -33,6 +34,7 @@ app.get('/api/health', async (req, res) => {
 
 // API routes
 app.use('/api/auth', authRoutes)
+app.use('/api/upload', uploadRoutes)
 
 // Placeholder API routes
 app.get('/api', (req, res) => {

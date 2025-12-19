@@ -3,11 +3,26 @@ import path from 'path'
 import fs from 'fs/promises'
 import { v4 as uuidv4 } from 'uuid'
 import sharp from 'sharp'
+import AWS from 'aws-sdk'
 
 // File upload configuration
 const UPLOAD_DIR = 'uploads'
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+
+// AWS S3 configuration (optional)
+const USE_S3 = process.env.USE_S3 === 'true'
+const S3_BUCKET = process.env.S3_BUCKET_NAME
+let s3: AWS.S3 | null = null
+
+if (USE_S3 && S3_BUCKET) {
+  AWS.config.update({
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    region: process.env.AWS_REGION || 'us-east-1'
+  })
+  s3 = new AWS.S3()
+}
 
 // Ensure upload directories exist
 export async function ensureUploadDirectories(userId: string): Promise<void> {
@@ -85,7 +100,7 @@ export function validateFileType(mimetype: string): boolean {
 }
 
 export function validateFileSize(size: number): boolean {
-  return size <= MAX_FILE_SIZE
+  return size > 0 && size <= MAX_FILE_SIZE
 }
 
 // File metadata extraction
@@ -109,16 +124,78 @@ export function extractFileMetadata(file: Express.Multer.File, userId: string, d
   }
 }
 
+// Upload file to S3 (if configured)
+export async function uploadToS3(filePath: string, key: string, contentType: string): Promise<string> {
+  if (!s3 || !S3_BUCKET) {
+    throw new Error('S3 not configured')
+  }
+
+  const fileContent = await fs.readFile(filePath)
+  
+  const params = {
+    Bucket: S3_BUCKET,
+    Key: key,
+    Body: fileContent,
+    ContentType: contentType,
+    ACL: 'private' as const
+  }
+
+  const result = await s3.upload(params).promise()
+  return result.Location
+}
+
+// Get signed URL for S3 file access
+export async function getS3SignedUrl(key: string, expiresIn: number = 3600): Promise<string> {
+  if (!s3 || !S3_BUCKET) {
+    throw new Error('S3 not configured')
+  }
+
+  const params = {
+    Bucket: S3_BUCKET,
+    Key: key,
+    Expires: expiresIn
+  }
+
+  return s3.getSignedUrl('getObject', params)
+}
+
 // Clean up uploaded files
 export async function cleanupFiles(userId: string, detectionId: string): Promise<void> {
   try {
-    const userDir = path.join(UPLOAD_DIR, userId)
-    const originalFile = path.join(userDir, 'original', `${detectionId}.*`)
-    const processedFile = path.join(userDir, 'processed', `${detectionId}_result.*`)
-    const thumbnailFile = path.join(userDir, 'thumbnails', `${detectionId}_thumb.jpg`)
-
-    // Note: In a real implementation, you'd use glob to find files with any extension
-    // For now, we'll handle cleanup in the route handlers
+    if (USE_S3) {
+      // Clean up S3 files
+      if (s3 && S3_BUCKET) {
+        const keys = [
+          `${userId}/original/${detectionId}`,
+          `${userId}/processed/${detectionId}_result.jpg`,
+          `${userId}/thumbnails/${detectionId}_thumb.jpg`
+        ]
+        
+        for (const key of keys) {
+          try {
+            await s3.deleteObject({ Bucket: S3_BUCKET, Key: key }).promise()
+          } catch (error) {
+            console.error(`Error deleting S3 object ${key}:`, error)
+          }
+        }
+      }
+    } else {
+      // Clean up local files
+      const userDir = path.join(UPLOAD_DIR, userId)
+      const filesToDelete = [
+        path.join(userDir, 'original', `${detectionId}.*`),
+        path.join(userDir, 'processed', `${detectionId}_result.jpg`),
+        path.join(userDir, 'thumbnails', `${detectionId}_thumb.jpg`)
+      ]
+      
+      for (const filePath of filesToDelete) {
+        try {
+          await fs.unlink(filePath)
+        } catch (error) {
+          // File might not exist, ignore error
+        }
+      }
+    }
   } catch (error) {
     console.error('Error cleaning up files:', error)
   }

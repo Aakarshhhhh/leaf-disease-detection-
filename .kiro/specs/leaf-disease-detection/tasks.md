@@ -85,7 +85,12 @@
   - Verify JWT tokens contain correct user information
   - _Requirements: 3.1, 3.5_
 
-- [ ] 4. Build file upload and validation system
+- [x] 4. Build file upload and validation system
+
+
+
+
+
   - Create file upload endpoint with Multer middleware
   - Implement file format and size validation
   - Add image preprocessing and optimization
@@ -93,11 +98,15 @@
   - Create file metadata extraction utilities
   - _Requirements: 1.1, 1.4, 5.5_
 
-- [ ] 4.1 Write property test for file validation
+- [x] 4.1 Write property test for file validation
+
+
   - **Property 1: File validation rejects invalid inputs**
   - **Validates: Requirements 1.1, 1.4**
 
-- [ ] 4.2 Write property test for image compression quality
+- [x] 4.2 Write property test for image compression quality
+
+
   - **Property 17: Image compression quality preservation**
   - **Validates: Requirements 5.5**
 

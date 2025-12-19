@@ -4,8 +4,8 @@ export interface User {
   id: string;
   email: string;
   passwordHash: string;
-  firstName?: string;
-  lastName?: string;
+  firstName: string | null;
+  lastName: string | null;
   role: string;
   createdAt: Date;
   updatedAt: Date;
@@ -78,5 +78,15 @@ export class DatabaseError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'DatabaseError';
+  }
+}
+
+// Extend Express Request interface to include custom properties
+declare global {
+  namespace Express {
+    interface Request {
+      user?: User;
+      detectionId?: string;
+    }
   }
 }
