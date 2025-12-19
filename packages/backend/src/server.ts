@@ -4,6 +4,7 @@ import helmet from 'helmet'
 import morgan from 'morgan'
 import dotenv from 'dotenv'
 import { connectDatabase, checkDatabaseHealth } from './lib/database.js'
+import authRoutes from './routes/auth.js'
 
 // Load environment variables
 dotenv.config()
@@ -29,6 +30,9 @@ app.get('/api/health', async (req, res) => {
     database: dbHealthy ? 'connected' : 'disconnected'
   })
 })
+
+// API routes
+app.use('/api/auth', authRoutes)
 
 // Placeholder API routes
 app.get('/api', (req, res) => {
