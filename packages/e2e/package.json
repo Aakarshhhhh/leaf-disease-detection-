@@ -1,0 +1,14 @@
+{
+  "name": "@leaf-disease-detection/e2e",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "cypress run",
+    "test:open": "cypress open",
+    "test:headless": "cypress run --headless"
+  },
+  "devDependencies": {
+    "cypress": "^12.17.4",
+    "@cypress/code-coverage": "^3.11.0"
+  }
+}

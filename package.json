@@ -1,0 +1,33 @@
+{
+  "name": "leaf-disease-detection",
+  "version": "1.0.0",
+  "description": "A web-based leaf disease detection system using U-Net deep learning model",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:ml\"",
+    "dev:frontend": "cd packages/frontend && npm run dev",
+    "dev:backend": "cd packages/backend && npm run dev",
+    "dev:ml": "cd packages/ml-service && python -m uvicorn main:app --reload --port 8001",
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:frontend": "cd packages/frontend && npm run build",
+    "build:backend": "cd packages/backend && npm run build",
+    "test": "npm run test:frontend && npm run test:backend && npm run test:ml",
+    "test:frontend": "cd packages/frontend && npm test",
+    "test:backend": "cd packages/backend && npm test",
+    "test:ml": "cd packages/ml-service && pytest",
+    "test:e2e": "cd packages/e2e && npm run test",
+    "lint": "npm run lint:frontend && npm run lint:backend",
+    "lint:frontend": "cd packages/frontend && npm run lint",
+    "lint:backend": "cd packages/backend && npm run lint"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

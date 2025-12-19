@@ -1,0 +1,57 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  passwordHash String @map("password_hash")
+  firstName String?  @map("first_name")
+  lastName  String?  @map("last_name")
+  role      String   @default("user")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  detections Detection[]
+  
+  @@map("users")
+}
+
+model Detection {
+  id               String    @id @default(cuid())
+  userId           String    @map("user_id")
+  imageUrl         String    @map("image_url")
+  originalFilename String?   @map("original_filename")
+  processingStatus String    @default("pending") @map("processing_status")
+  confidenceScore  Float?    @map("confidence_score")
+  locationLat      Float?    @map("location_lat")
+  locationLng      Float?    @map("location_lng")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  processedAt      DateTime? @map("processed_at")
+  
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  diseases Disease[]
+  
+  @@map("detections")
+}
+
+model Disease {
+  id                        String   @id @default(cuid())
+  detectionId               String   @map("detection_id")
+  diseaseName               String   @map("disease_name")
+  confidence                Float
+  affectedRegions           Json?    @map("affected_regions")
+  treatmentRecommendations  String[] @map("treatment_recommendations")
+  
+  detection Detection @relation(fields: [detectionId], references: [id], onDelete: Cascade)
+  
+  @@map("diseases")
+}

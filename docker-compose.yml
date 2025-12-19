@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: leaf-detection-postgres
+    environment:
+      POSTGRES_DB: leaf_disease_detection
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./packages/backend/prisma/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: leaf-detection-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./packages/backend
+      dockerfile: Dockerfile
+    container_name: leaf-detection-backend
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/leaf_disease_detection
+      REDIS_URL: redis://redis:6379
+      ML_SERVICE_URL: http://ml-service:8001
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./uploads:/app/uploads
+
+  ml-service:
+    build:
+      context: ./packages/ml-service
+      dockerfile: Dockerfile
+    container_name: leaf-detection-ml
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./models:/app/models
+      - ./packages/ml-service/data:/app/data
+    environment:
+      - DATASET_PATH=/app/data/raw/leaf_disease_segmentation
+
+  frontend:
+    build:
+      context: ./packages/frontend
+      dockerfile: Dockerfile
+    container_name: leaf-detection-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:
