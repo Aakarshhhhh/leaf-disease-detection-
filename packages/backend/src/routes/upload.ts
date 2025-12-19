@@ -97,6 +97,63 @@ router.get('/status/:detectionId', authenticateToken, async (req, res) => {
   }
 })
 
+// Get user's detection history
+router.get('/history', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user!.id
+    const { page = '1', limit = '10', status, dateFrom, dateTo } = req.query
+
+    const pageNum = parseInt(page as string, 10)
+    const limitNum = parseInt(limit as string, 10)
+    const skip = (pageNum - 1) * limitNum
+
+    // Build filter conditions
+    const where: any = { userId }
+    
+    if (status && typeof status === 'string') {
+      where.processingStatus = status
+    }
+    
+    if (dateFrom || dateTo) {
+      where.createdAt = {}
+      if (dateFrom && typeof dateFrom === 'string') {
+        where.createdAt.gte = new Date(dateFrom)
+      }
+      if (dateTo && typeof dateTo === 'string') {
+        where.createdAt.lte = new Date(dateTo)
+      }
+    }
+
+    // Get detections with pagination
+    const [detections, totalCount] = await Promise.all([
+      prisma.detection.findMany({
+        where,
+        include: {
+          diseases: true
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limitNum
+      }),
+      prisma.detection.count({ where })
+    ])
+
+    res.json({
+      detections,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total: totalCount,
+        pages: Math.ceil(totalCount / limitNum)
+      }
+    })
+
+  } catch (error) {
+    console.error('History retrieval error:', error)
+    res.status(500).json({ error: 'Failed to retrieve history' })
+  }
+})
+
 // Serve uploaded files
 router.get('/files/:userId/:folder/:filename', (req, res) => {
   try {
