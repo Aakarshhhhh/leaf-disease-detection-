@@ -151,14 +151,14 @@
   - **Property 6: Low confidence flagging**
   - **Validates: Requirements 2.5**
 
-- [ ] 6. Create disease information and treatment recommendation system
+- [x] 6. Create disease information and treatment recommendation system
   - Build disease database with treatment information
   - Implement treatment recommendation engine
   - Create disease information API endpoints
   - Add disease-specific guidance and resources
   - _Requirements: 2.3_
 
-- [ ] 6.1 Write property test for treatment recommendations
+- [x] 6.1 Write property test for treatment recommendations
   - **Property 4: Treatment recommendations accompany disease detection**
   - **Validates: Requirements 2.3**
 

@@ -1,17 +1,82 @@
 #!/usr/bin/env python3
 
-# Try to execute the detection service file step by step
-import numpy as np
-from typing import List, Dict, Any, Tuple, Union
-import logging
-from datetime import datetime
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
-import uuid
+import traceback
 
-from models.unet import UNetModel
-from preprocessing.image_processor import ImageProcessor
+print("Starting debug...")
 
+try:
+    print("Importing numpy...")
+    import numpy as np
+    print("Numpy imported successfully")
+except Exception as e:
+    print("Error importing numpy:")
+    traceback.print_exc()
+
+try:
+    print("Importing typing...")
+    from typing import List, Dict, Any, Tuple, Union
+    print("Typing imported successfully")
+except Exception as e:
+    print("Error importing typing:")
+    traceback.print_exc()
+
+try:
+    print("Importing logging...")
+    import logging
+    print("Logging imported successfully")
+except Exception as e:
+    print("Error importing logging:")
+    traceback.print_exc()
+
+try:
+    print("Importing datetime...")
+    from datetime import datetime
+    print("Datetime imported successfully")
+except Exception as e:
+    print("Error importing datetime:")
+    traceback.print_exc()
+
+try:
+    print("Importing asyncio...")
+    import asyncio
+    print("Asyncio imported successfully")
+except Exception as e:
+    print("Error importing asyncio:")
+    traceback.print_exc()
+
+try:
+    print("Importing ThreadPoolExecutor...")
+    from concurrent.futures import ThreadPoolExecutor
+    print("ThreadPoolExecutor imported successfully")
+except Exception as e:
+    print("Error importing ThreadPoolExecutor:")
+    traceback.print_exc()
+
+try:
+    print("Importing uuid...")
+    import uuid
+    print("UUID imported successfully")
+except Exception as e:
+    print("Error importing uuid:")
+    traceback.print_exc()
+
+try:
+    print("Importing UNetModel...")
+    from models.unet import UNetModel
+    print("UNetModel imported successfully")
+except Exception as e:
+    print("Error importing UNetModel:")
+    traceback.print_exc()
+
+try:
+    print("Importing ImageProcessor...")
+    from preprocessing.image_processor import ImageProcessor
+    print("ImageProcessor imported successfully")
+except Exception as e:
+    print("Error importing ImageProcessor:")
+    traceback.print_exc()
+
+print("Setting up logger...")
 logger = logging.getLogger(__name__)
 
 print("Defining DetectionResult class...")
@@ -33,20 +98,8 @@ class DetectionResult:
         self.processing_time = processing_time
         self.metadata = metadata or {}
         self.timestamp = datetime.now().isoformat()
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert result to dictionary format"""
-        return {
-            "detection_id": self.detection_id,
-            "diseases": self.diseases,
-            "confidence": self.confidence,
-            "processing_time": self.processing_time,
-            "timestamp": self.timestamp,
-            "metadata": self.metadata,
-            "has_segmentation": self.segmentation_mask is not None
-        }
 
-print("✓ DetectionResult class defined")
+print("DetectionResult class defined successfully")
 
 print("Defining DiseaseDetectionService class...")
 
@@ -60,6 +113,7 @@ class DiseaseDetectionService:
         Args:
             model_weights_path: Path to pre-trained model weights
         """
+        print("Initializing DiseaseDetectionService...")
         self.model = UNetModel()
         self.image_processor = ImageProcessor()
         self.executor = ThreadPoolExecutor(max_workers=4)
@@ -77,15 +131,14 @@ class DiseaseDetectionService:
         
         logger.info("Disease detection service initialized")
 
-print("✓ DiseaseDetectionService class defined")
+print("DiseaseDetectionService class defined successfully")
 
-# Test creating instances
-print("Testing DetectionResult creation...")
-result = DetectionResult("test-id", [], 0.5)
-print("✓ DetectionResult created")
+print("Testing class instantiation...")
+try:
+    service = DiseaseDetectionService()
+    print("DiseaseDetectionService instantiated successfully")
+except Exception as e:
+    print("Error instantiating DiseaseDetectionService:")
+    traceback.print_exc()
 
-print("Testing DiseaseDetectionService creation...")
-service = DiseaseDetectionService()
-print("✓ DiseaseDetectionService created")
-
-print("All tests passed!")
+print("Debug complete!")

@@ -228,6 +228,87 @@ class TestHealthyStatusDetection:
             finally:
                 loop.close()
 
+class TestTreatmentRecommendations:
+    """
+    **Feature: leaf-disease-detection, Property 4: Treatment recommendations accompany disease detection**
+    **Validates: Requirements 2.3**
+    """
+    
+    @given(valid_image_data())
+    def test_treatment_recommendations_accompany_disease_detection(self, image_data):
+        """
+        Property: For any disease identification result, the system should provide 
+        corresponding treatment recommendations
+        """
+        service = DiseaseDetectionService()
+        
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        try:
+            result = loop.run_until_complete(service.detect_disease(image_data))
+            
+            # Verify result has diseases
+            assert isinstance(result.diseases, list)
+            assert len(result.diseases) > 0
+            
+            # Every disease should have treatment recommendations
+            for disease in result.diseases:
+                assert 'treatment_recommendations' in disease
+                assert isinstance(disease['treatment_recommendations'], list)
+                assert len(disease['treatment_recommendations']) > 0
+                
+                # Each treatment recommendation should be a non-empty string
+                for treatment in disease['treatment_recommendations']:
+                    assert isinstance(treatment, str)
+                    assert len(treatment.strip()) > 0
+                
+                # Verify disease has required fields for treatment context
+                assert 'name' in disease
+                assert 'confidence' in disease
+                assert isinstance(disease['name'], str)
+                assert len(disease['name']) > 0
+            
+            # Test specific disease scenarios with mocked results
+            
+        finally:
+            loop.close()
+    
+    @given(st.sampled_from(['healthy', 'bacterial_blight', 'leaf_spot', 'rust', 'powdery_mildew', 'unknown_disease']))
+    def test_treatment_recommendations_for_specific_diseases(self, disease_name):
+        """
+        Property: For any identified disease type, appropriate treatment recommendations 
+        should be provided based on the disease characteristics
+        """
+        service = DiseaseDetectionService()
+        
+        # Get treatment recommendations directly
+        treatments = service._get_treatment_recommendations(disease_name)
+        
+        # Verify treatments structure
+        assert isinstance(treatments, list)
+        assert len(treatments) > 0
+        
+        # Each treatment should be a meaningful string
+        for treatment in treatments:
+            assert isinstance(treatment, str)
+            assert len(treatment.strip()) > 0
+            assert len(treatment) > 10  # Should be descriptive, not just single words
+        
+        # Verify disease-specific treatment logic
+        if disease_name == 'healthy':
+            # Healthy plants should have maintenance recommendations
+            assert any('no treatment' in t.lower() or 'regular care' in t.lower() for t in treatments)
+        elif disease_name in ['bacterial_blight', 'leaf_spot', 'rust', 'powdery_mildew']:
+            # Known diseases should have specific treatments
+            assert len(treatments) >= 3  # Should have multiple treatment steps
+            # Should contain actionable advice
+            treatment_text = ' '.join(treatments).lower()
+            assert any(keyword in treatment_text for keyword in ['remove', 'apply', 'spray', 'improve', 'avoid'])
+        else:
+            # Unknown diseases should have consultation recommendations
+            assert any('consult' in t.lower() or 'professional' in t.lower() for t in treatments)
+
 class TestLowConfidenceFlagging:
     """
     **Feature: leaf-disease-detection, Property 6: Low confidence flagging**

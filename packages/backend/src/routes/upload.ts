@@ -10,6 +10,7 @@ import {
 } from '../services/uploadService.js'
 import { authenticateToken } from '../middleware/auth.js'
 import { prisma } from '../lib/database.js'
+import { diseaseService } from '../services/diseaseService.js'
 
 const router = express.Router()
 
@@ -176,6 +177,81 @@ router.get('/files/:userId/:folder/:filename', (req, res) => {
   } catch (error) {
     console.error('File serve error:', error)
     res.status(500).json({ error: 'Failed to serve file' })
+  }
+})
+
+// Process detection with ML service (simulation for now)
+router.post('/process/:detectionId', authenticateToken, async (req, res) => {
+  try {
+    const { detectionId } = req.params
+    const userId = req.user!.id
+
+    // Find the detection
+    const detection = await prisma.detection.findFirst({
+      where: {
+        id: detectionId,
+        userId
+      }
+    })
+
+    if (!detection) {
+      return res.status(404).json({ error: 'Detection not found' })
+    }
+
+    if (detection.processingStatus !== 'pending') {
+      return res.status(400).json({ error: 'Detection already processed' })
+    }
+
+    // Simulate ML processing - in real implementation, this would call the ML service
+    const mockDiseases = [
+      {
+        diseaseName: 'bacterial_blight',
+        confidence: 0.85,
+        treatmentRecommendations: await diseaseService.getTreatmentRecommendations('bacterial_blight')
+      },
+      {
+        diseaseName: 'healthy',
+        confidence: 0.15,
+        treatmentRecommendations: await diseaseService.getTreatmentRecommendations('healthy')
+      }
+    ]
+
+    // Update detection status
+    const updatedDetection = await prisma.detection.update({
+      where: { id: detectionId },
+      data: {
+        processingStatus: 'completed',
+        confidenceScore: mockDiseases[0].confidence,
+        processedAt: new Date()
+      }
+    })
+
+    // Create disease records
+    const createdDiseases = await Promise.all(
+      mockDiseases.map(disease => 
+        diseaseService.createDisease({
+          detectionId: detectionId,
+          diseaseName: disease.diseaseName,
+          confidence: disease.confidence,
+          treatmentRecommendations: disease.treatmentRecommendations
+        })
+      )
+    )
+
+    res.json({
+      message: 'Detection processed successfully',
+      detection: {
+        id: updatedDetection.id,
+        status: updatedDetection.processingStatus,
+        confidence: updatedDetection.confidenceScore,
+        processedAt: updatedDetection.processedAt
+      },
+      diseases: createdDiseases
+    })
+
+  } catch (error) {
+    console.error('Processing error:', error)
+    res.status(500).json({ error: 'Failed to process detection' })
   }
 })
 
